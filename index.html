@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MiniCash - Digital Wallet</title>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Poppins) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS VARIABLES & THEME (JazzCash Inspired Red/White Theme) --- */
+        :root {
+            --primary-red: #D32F2F;
+            --primary-dark: #9A0007;
+            --primary-light: #FF6659;
+            --accent-gold: #FFC107;
+            --bg-light: #F8F9FA;
+            --surface-white: #FFFFFF;
+            --text-dark: #212121;
+            --text-muted: #666666;
+            --border-color: #E0E0E0;
+            --success-green: #2E7D32;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 15px rgba(0,0,0,0.12);
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #121212; /* Dark background behind mobile frame on desktop */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+
+        /* --- MOBILE APP FRAME --- */
+        #app-container {
+            width: 100%;
+            max-width: 430px;
+            height: 100vh;
+            max-height: 932px;
+            background-color: var(--bg-light);
+            position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        @media (min-width: 480px) {
+            #app-container {
+                height: 90vh;
+                border-radius: 28px;
+            }
+        }
+
+        /* --- SIMULATED DEMO BANNER --- */
+        .demo-warning-banner {
+            background: #FFF3CD;
+            color: #856404;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            padding: 4px 8px;
+            border-bottom: 1px solid #FFEEBA;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* --- SCREEN WRAPPER --- */
+        .screen {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding-bottom: 70px; /* Space for bottom nav */
+            background: var(--bg-light);
+            animation: fadeIn 0.25s ease-in-out;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .screen-no-nav {
+            padding-bottom: 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- HEADER STYLES --- */
+        .app-header {
+            background: linear-gradient(135deg, var(--primary-red), var(--primary-dark));
+            color: var(--surface-white);
+            padding: 20px 18px 16px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+
+        .header-btn:active {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* --- FORM STYLES --- */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 14px;
+            color: var(--primary-red);
+            font-size: 16px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 14px 12px 42px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            outline: none;
+            background-color: var(--surface-white);
+            transition: 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.15);
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-red), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: #E0E0E0;
+            color: var(--text-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary-red);
+            color: var(--primary-red);
+        }
+
+        .btn-biometric {
+            background: #FFFFFF;
+            border: 1.5px solid var(--border-color);
+            color: var(--text-dark);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* --- AUTH SCREENS --- */
+        .auth-container {
+            padding: 28px 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 100%;
+            background: white;
+        }
+
+        .auth-brand {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .auth-brand .logo-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary-red), var(--primary-dark));
+            color: white;
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            margin: 0 auto 12px auto;
+            box-shadow: var(--shadow-md);
+        }
+
+        .auth-brand h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--primary-red);
+            letter-spacing: -0.5px;
+        }
+
+        .auth-brand p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* --- HOME DASHBOARD --- */
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-red), var(--primary-dark));
+            color: white;
+            padding: 20px 20px 30px 20px;
+            border-bottom-left-radius: 28px;
+            border-bottom-right-radius: 28px;
+        }
+
+        .user-profile-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .avatar-circle {
+            width: 42px;
+            height: 42px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 18px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .balance-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: var(--radius-lg);
+            padding: 18px;
+            color: white;
+            text-align: center;
+            position: relative;
+        }
+
+        .balance-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+
+        .balance-amount {
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .toggle-balance-btn {
+            position: absolute;
+            right: 14px;
+            top: 14px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 0 16px;
+            margin-top: -20px;
+        }
+
+        .action-item {
+            background: white;
+            padding: 14px 6px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-item:active {
+            transform: scale(0.95);
+        }
+
+        .action-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(211, 47, 47, 0.08);
+            color: var(--primary-red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .action-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            padding: 18px 20px 10px 20px;
+            color: var(--text-dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* --- TRANSACTION LIST --- */
+        .tx-list {
+            padding: 0 20px;
+        }
+
+        .tx-item {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .tx-icon-wrapper {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin-right: 12px;
+        }
+
+        .tx-icon-credit {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .tx-icon-debit {
+            background: #FFEBEE;
+            color: #C62828;
+        }
+
+        .tx-details {
+            flex-grow: 1;
+        }
+
+        .tx-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .tx-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .tx-amount {
+            text-align: right;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .amount-credit { color: #2E7D32; }
+        .amount-debit { color: #C62828; }
+
+        .simulated-badge {
+            font-size: 9px;
+            background: #E0E0E0;
+            color: #424242;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+
+        /* --- BOTTOM NAV BAR --- */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            z-index: 50;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 25%;
+        }
+
+        .nav-item i {
+            font-size: 18px;
+            margin-bottom: 3px;
+        }
+
+        .nav-item.active {
+            color: var(--primary-red);
+            font-weight: 600;
+        }
+
+        /* --- CONTENT CONTAINERS --- */
+        .content-padding {
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 18px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 16px;
+        }
+
+        /* --- RECEIPT MODAL / CARD --- */
+        .receipt-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            text-align: center;
+            box-shadow: var(--shadow-md);
+            border-top: 6px solid var(--primary-red);
+            margin-top: 10px;
+        }
+
+        .receipt-status-icon {
+            width: 60px;
+            height: 60px;
+            background: #E8F5E9;
+            color: #2E7D32;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin: 0 auto 12px auto;
+        }
+
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px dashed var(--border-color);
+            font-size: 13px;
+        }
+
+        .receipt-row:last-child {
+            border-bottom: none;
+        }
+
+        .receipt-label { color: var(--text-muted); }
+        .receipt-val { font-weight: 600; color: var(--text-dark); }
+
+        /* --- BIOMETRIC MODAL SIMULATION --- */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .biometric-modal {
+            background: white;
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 320px;
+            padding: 28px 20px;
+            text-align: center;
+            box-shadow: var(--shadow-md);
+            animation: popIn 0.2s ease-out;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .fp-icon-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(211, 47, 47, 0.08);
+            color: var(--primary-red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 38px;
+            margin: 18px auto;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 2px dashed var(--primary-red);
+        }
+
+        .fp-icon-btn:active, .fp-icon-btn.scanning {
+            transform: scale(0.92);
+            background: var(--primary-red);
+            color: white;
+            border-style: solid;
+        }
+
+        /* --- SWITCH TOGGLE --- */
+        .switch-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #CCC;
+            transition: .3s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-red);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        /* --- NOTIFICATION / ALERT --- */
+        .alert-box {
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            margin-bottom: 14px;
+            display: none;
+        }
+
+        .alert-danger {
+            background-color: #FFEBEE;
+            color: #C62828;
+            border: 1px solid #FFCDD2;
+        }
+
+        .alert-success {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+            border: 1px solid #C8E6C9;
+        }
+
+        /* --- QR SIMULATION --- */
+        .qr-placeholder {
+            width: 180px;
+            height: 180px;
+            margin: 15px auto;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <!-- Top Demo Disclaimer Banner -->
+    <div class="demo-warning-banner">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>SIMULATED DEMO WALLET - NO REAL MONEY</span>
+    </div>
+
+    <!-- ==================== SCREEN: LOGIN ==================== -->
+    <div id="screen-login" class="screen screen-no-nav active">
+        <div class="auth-container">
+            <div class="auth-brand">
+                <div class="logo-icon"><i class="fa-solid fa-wallet"></i></div>
+                <h1>MiniCash</h1>
+                <p>Fast, Safe & Simulated Mobile Wallet</p>
+            </div>
+
+            <div id="login-alert" class="alert-box alert-danger"></div>
+
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Mobile Number</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-phone"></i>
+                        <input type="tel" id="login-mobile" class="form-control" placeholder="03001234567" maxlength="11" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>4-Digit PIN</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="login-pin" class="form-control" placeholder="••••" maxlength="4" pattern="\d{4}" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+                    <i class="fa-solid fa-right-to-bracket"></i> Login
+                </button>
+            </form>
+
+            <button type="button" class="btn btn-biometric" id="login-biometric-btn" onclick="triggerBiometricLogin()" style="margin-top: 12px;">
+                <i class="fa-solid fa-fingerprint" style="color: var(--primary-red); font-size: 18px;"></i>
+                Login with Biometrics
+            </button>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <p style="font-size: 13px; color: var(--text-muted);">
+                    Don't have an account? 
+                    <a href="#" onclick="showScreen('screen-signup')" style="color: var(--primary-red); font-weight: 600; text-decoration: none;">Sign Up</a>
+                </p>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                    <a href="#" onclick="showScreen('screen-admin-login')" style="font-size: 12px; color: var(--text-muted); text-decoration: underline;">
+                        Admin Portal Access
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCREEN: SIGNUP ==================== -->
+    <div id="screen-signup" class="screen screen-no-nav">
+        <div class="auth-container">
+            <div class="auth-brand">
+                <div class="logo-icon"><i class="fa-solid fa-user-plus"></i></div>
+                <h1>Create Account</h1>
+                <p>Join MiniCash Demo Network</p>
+            </div>
+
+            <div id="signup-alert" class="alert-box alert-danger"></div>
+
+            <form id="signup-form" onsubmit="handleSignup(event)">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="signup-name" class="form-control" placeholder="e.g. Ali Khan" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mobile Number (11 Digits)</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-phone"></i>
+                        <input type="tel" id="signup-mobile" class="form-control" placeholder="03001234567" maxlength="11" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Create 4-Digit PIN</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-key"></i>
+                        <input type="password" id="signup-pin" class="form-control" placeholder="••••" maxlength="4" pattern="\d{4}" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+                    Register Demo Account
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <p style="font-size: 13px; color: var(--text-muted);">
+                    Already registered? 
+                    <a href="#" onclick="showScreen('screen-login')" style="color: var(--primary-red); font-weight: 600; text-decoration: none;">Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCREEN: HOME DASHBOARD ==================== -->
+    <div id="screen-home" class="screen">
+        <div class="dashboard-header">
+            <div class="user-profile-bar">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="avatar-circle" id="user-avatar">A</div>
+                    <div>
+                        <div style="font-size: 11px; opacity: 0.8;">Welcome Back,</div>
+                        <div id="dash-user-name" style="font-weight: 600; font-size: 15px;">User Name</div>
+                    </div>
+                </div>
+                <button class="header-btn" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
+            </div>
+
+            <div class="balance-card">
+                <button class="toggle-balance-btn" onclick="toggleBalanceVisibility()"><i id="balance-eye-icon" class="fa-solid fa-eye"></i></button>
+                <div class="balance-title">Simulated Mobile Balance</div>
+                <div class="balance-amount" id="dash-balance">PKR ••••••</div>
+                <div style="font-size: 10px; opacity: 0.8; margin-top: 4px;">Account: <span id="dash-mobile">03000000000</span></div>
+            </div>
+        </div>
+
+        <div class="action-grid">
+            <div class="action-item" onclick="showScreen('screen-send')">
+                <div class="action-icon"><i class="fa-solid fa-paper-plane"></i></div>
+                <div class="action-label">Send Money</div>
+            </div>
+            <div class="action-item" onclick="showScreen('screen-add')">
+                <div class="action-icon"><i class="fa-solid fa-wallet"></i></div>
+                <div class="action-label">Add Money</div>
+            </div>
+            <div class="action-item" onclick="showScreen('screen-receive')">
+                <div class="action-icon"><i class="fa-solid fa-qrcode"></i></div>
+                <div class="action-label">Receive</div>
+            </div>
+            <div class="action-item" onclick="showScreen('screen-history')">
+                <div class="action-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                <div class="action-label">History</div>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <span>Recent Activity</span>
+            <a href="#" onclick="showScreen('screen-history')" style="font-size: 12px; color: var(--primary-red); text-decoration: none;">View All</a>
+        </div>
+
+        <div class="tx-list" id="dashboard-recent-txs">
+            <!-- Dynamic Recent Transactions Here -->
+        </div>
+    </div>
+
+    <!-- ==================== SCREEN: SEND MONEY ==================== -->
+    <div id="screen-send" class="screen">
+        <div class="app-header">
+            <button class="header-btn" onclick="showScreen('screen-home')"><i class="fa-solid fa-arrow-left"></i></button>
+            <div class="header-title">Send Money</div>
+            <div style="width: 36px;"></div>
+        </div>
+
+        <div class="content-padding">
+            <div id="send-alert" class="alert-box alert-danger"></div>
+
+            <div class="card">
+                <form id="send-money-form" onsubmit="handleSendMoney(event)">
+                    <div class="form-group">
+                        <label>Receiver Demo Mobile Number</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-mobile-screen"></i>
+                            <input type="tel" id="send-receiver" class="form-control" placeholder="03119876543" maxlength="11" required>
+                        </div>
+                        <small style="font-size: 10px; color: var(--text-muted); margin-top: 4px; display: block;">Transfers allowed only between registered demo accounts.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Amount (PKR)</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-money-bill-wave"></i>
+                            <input type="number" id="send-amount" class="form-control" placeholder="e.g. 500" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Enter 4-Digit PIN to Confirm</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="send-pin" class="form-control" placeholder="••••" maxlength="4" pattern="\d{4}">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Transfer Funds</button>
+                    
+                    <button type="button" class="btn btn-biometric" id="send-biometric-btn" onclick="triggerBiometricSend()" style="margin-top: 10px;">
+                        <i class="fa-solid fa-fingerprint" style="color: var(--primary-red);"></i> Express Biometric Send
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCREEN: ADD MONEY ==================== -->
+    <div id="screen-add" class="screen">
+        <div class="app-header">
+            <button class="header-btn" onclick="showScreen('screen-home')"><i class="fa-solid fa-arrow-left"></i></button>
+            <div class="header-title">Add Demo Money</div>
+            <div style="width: 36px;"></div>
+        </div>
+
+        <div class="content-padding">
+            <div class="card" style="background: #FFF8E1; border: 1px solid #FFE082;">
+                <p style="font-size: 12px; color: #856404; display: flex; gap: 8px; align-items: flex-start;">
+                    <i class="fa-solid fa-circle-info" style="margin-top: 2px;"></i>
+                    <span>This page simulates depositing demo funds into your account for testing purposes. No real bank accounts are accessed.</span>
+                </p>
+            </div>
+
+            <div id="add-alert" class="alert-box alert-danger"></div>
+
+            <div class="card">
+                <form id="add-money-form" onsubmit="handleAddMoney(event)">
+                    <div class="form-group">
+                        <label>Demo Amount to Add (PKR)</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-plus-circle"></i>
+                            <input type="number" id="add-amount" class="form-control" placeholder="e.g. 2000" min="1" max="100000" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Simulated Source Method</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-building-columns"></i>
+                            <select class="form-control" style="padding-left: 42px;">
+                                <option>Demo Bank Debit Card</option>
+                                <option>Simulated Agent Deposit</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Simulate Add Money</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCREEN: RECEIVE MONEY ==================== -->
+    <div id="screen-receive" class="screen">
+        <div class="app-header">
+            <button class="header-btn" onclick="showScreen('screen-home')"><i class="fa-solid fa-arrow-left"></i></button>
+            <div class="header-title">Receive Money</div>
+            <div style="width: 36px;"></div>
+        </div>
+
+        <div class="content-padding" style="text-align: center;">
+            <div class="card">
+                <h3 id="receive-user-name" style="font-size: 16px; margin-bottom: 4px;">User Name</h3>
+                <p id="receive-mobile" style="font-size: 13px; color: var(--text-muted); font-weight: 600;">03000000000</p>
+                
+                <div class="qr-placeholder">
+                    <img id="receive-qr-img" src="" alt="Demo QR Code">
+                </div>
+
+                <p style="font-size: 11px; color: var(--text-muted);">
+                    Scan this QR code or share your demo mobile number to receive simulated payments from other MiniCash users.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCREEN: TRANSACTION HISTORY ==================== -->
+    <div id="screen-history" class="screen">
+        <div class="app-header">
+            <button class="header-btn" onclick="showScreen('screen-home')"><i class="fa-solid fa-arrow-left"></i></button>
+            <div class="header-title">Transaction History</div>
+            <div style="width: 36px;"></div>
+        </div>
+
+        <div class="content-padding">
+            <div class="tx-list" id="full-history-list" style="padding: 0;">
+                <!-- Full Transaction History Loaded Dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCREEN: PROFILE & SETTINGS ==================== -->
+    <div id="screen-profile" class="screen">
+        <div class="app-header">
+            <div class="header-title"><i class="fa-solid fa-user-gear"></i> Profile & Settings</div>
+            <div></div>
+        </div>
+
+        <div class="content-padding">
+            <div class="card" style="text-align: center; padding: 24px;">
+                <div class="avatar-circle" id="profile-avatar" style="width: 60px; height: 60px; font-size: 24px; margin: 0 auto 12px auto; background: var(--primary-red); color: white;">A</div>
+                <h3 id="profile-name" style="font-size: 18px;">User Name</h3>
+                <p id="profile-mobile" style="font-size: 13px; color: var(--text-muted);">03000000000</p>
+                <span class="simulated-badge" style="margin-top: 8px; display: inline-block;">DEMO ACCOUNT</span>
+            </div>
+
+            <div class="card">
+                <h4 style="font-size: 14px; margin-bottom: 12px;"><i class="fa-solid fa-shield-halved" style="color: var(--primary-red);"></i> Security Settings</h4>
+                
+                <div class="switch-row">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 600;">Biometric Authentication</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">Use fingerprint for quick login & transfers</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="biometric-toggle" onchange="toggleBiometricSetting(this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 12px 0;">
+
+                <button class="btn btn-outline" style="padding: 10px; font-size: 13px;" onclick="toggleChangePinForm()">
+                    <i class="fa-solid fa-key"></i> Change Demo PIN
+                </button>
+
+                <div id="change-pin-box" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border-color);">
+                    <div id="pin-change-alert" class="alert-box alert-danger"></div>
+                    <div class="form-group">
+                        <label>Current PIN</label>
+                        <input type="password" id="pin-current" class="form-control" maxlength="4" style="padding-left: 14px;">
+                    </div>
+                    <div class="form-group">
+                        <label>New 4-Digit PIN</label>
+                        <input type="password" id="pin-new" class="form-control" maxlength="4" style="padding-left: 14px;">
+                    </div>
+                    <button class="btn btn-primary" style="padding: 10px; font-size: 13px;" onclick="handleChangePin()">Update PIN</button>
+                </div>
+            </div>
+
+            <div class="card" style="background: #FFF3CD; border: 1px solid #FFE082;">
+                <p style="font-size: 11px; color: #856404; line-height: 1.4;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> <strong>Security Notice:</strong> Demo data is stored locally in your browser's <code>localStorage</code>. It is not encrypted or secure for real financial transactions. Never input real bank passwords or sensitive information.
+                </p>
+            </div>
+
+            <button class="btn btn-secondary" onclick="logout()">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== SCREEN: RECEIPT ==================== -->
+    <div id="screen-receipt" class="screen screen-no-nav">
+        <div class="content-padding">
+            <div class="receipt-card">
+                <div class="receipt-status-icon">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <h2 style="font-size: 18px; color: var(--success-green);">Transaction Successful</h2>
+                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 20px;">MiniCash Demo Transfer Confirmation</p>
+
+                <div class="receipt-row">
+                    <span class="receipt-label">Transaction ID</span>
+                    <span class="receipt-val" id="rcpt-id">TXN123456</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Date & Time</span>
+                    <span class="receipt-val" id="rcpt-date">2026-10-18 12:00</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Receiver</span>
+                    <span class="receipt-val" id="rcpt-receiver">03000000000</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Amount Transferred</span>
+                    <span class="receipt-val" id="rcpt-amount" style="color: var(--primary-red); font-size: 16px;">PKR 0</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Status</span>
+                    <span class="receipt-val" style="color: var(--success-green);">Completed (Simulated)</span>
+                </div>
+
+                <button class="btn btn-primary" style="margin-top: 24px;" onclick="showScreen('screen-home')">
+                    Back to Home
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCREEN: ADMIN LOGIN & PANEL ==================== -->
+    <div id="screen-admin-login" class="screen screen-no-nav">
+        <div class="auth-container">
+            <div class="auth-brand">
+                <div class="logo-icon" style="background: #333;"><i class="fa-solid fa-user-shield"></i></div>
+                <h1>Admin Portal</h1>
+                <p>Simulated System Management</p>
+            </div>
+
+            <div id="admin-login-alert" class="alert-box alert-danger"></div>
+
+            <form onsubmit="handleAdminLogin(event)">
+                <div class="form-group">
+                    <label>Admin Username</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user-tag" style="color: #333;"></i>
+                        <input type="text" id="admin-user" class="form-control" placeholder="admin" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Admin Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock" style="color: #333;"></i>
+                        <input type="password" id="admin-pass" class="form-control" placeholder="admin123" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="background: #333;">Login to Admin Panel</button>
+            </form>
+
+            <button class="btn btn-secondary" style="margin-top: 12px;" onclick="showScreen('screen-login')">Back to User Login</button>
+        </div>
+    </div>
+
+    <div id="screen-admin-dashboard" class="screen screen-no-nav">
+        <div class="app-header" style="background: #212121;">
+            <div class="header-title"><i class="fa-solid fa-sliders"></i> Admin Dashboard</div>
+            <button class="header-btn" onclick="showScreen('screen-login')"><i class="fa-solid fa-power-off"></i></button>
+        </div>
+
+        <div class="content-padding">
+            <div class="card" style="background: #E0F2FE; border: 1px solid #BAE6FD;">
+                <p style="font-size: 11px; color: #0369A1;">
+                    <i class="fa-solid fa-circle-info"></i> All balance adjustments and user controls are completely simulated in LocalStorage.
+                </p>
+            </div>
+
+            <div class="card">
+                <h4 style="font-size: 14px; margin-bottom: 12px;">Registered Demo Users</h4>
+                <div id="admin-users-list">
+                    <!-- User list loaded dynamically -->
+                </div>
+            </div>
+
+            <div class="card">
+                <h4 style="font-size: 14px; margin-bottom: 12px;">Adjust User Balance</h4>
+                <div id="admin-adjust-alert" class="alert-box alert-danger"></div>
+                <div class="form-group">
+                    <label>Select User Mobile</label>
+                    <select id="admin-target-user" class="form-control" style="padding-left: 14px;"></select>
+                </div>
+                <div class="form-group">
+                    <label>New Balance (PKR)</label>
+                    <input type="number" id="admin-new-balance" class="form-control" placeholder="e.g. 15000" style="padding-left: 14px;">
+                </div>
+                <button class="btn btn-primary" style="background: #212121;" onclick="handleAdminBalanceUpdate()">Update Demo Balance</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== BOTTOM NAVIGATION BAR ==================== -->
+    <div class="bottom-nav" id="main-bottom-nav" style="display: none;">
+        <div class="nav-item active" id="nav-home" onclick="showScreen('screen-home')">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </div>
+        <div class="nav-item" id="nav-send" onclick="showScreen('screen-send')">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Send</span>
+        </div>
+        <div class="nav-item" id="nav-history" onclick="showScreen('screen-history')">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>History</span>
+        </div>
+        <div class="nav-item" id="nav-profile" onclick="showScreen('screen-profile')">
+            <i class="fa-solid fa-user"></i>
+            <span>Profile</span>
+        </div>
+    </div>
+
+    <!-- ==================== BIOMETRIC SIMULATION MODAL ==================== -->
+    <div class="modal-overlay" id="biometric-modal">
+        <div class="biometric-modal">
+            <h3 style="font-size: 16px; margin-bottom: 6px;">Biometric Verification</h3>
+            <p style="font-size: 12px; color: var(--text-muted);" id="biometric-modal-msg">Touch sensor to authenticate demo transaction</p>
+            
+            <div class="fp-icon-btn" id="fp-scan-btn" onclick="executeBiometricScan()">
+                <i class="fa-solid fa-fingerprint"></i>
+            </div>
+
+            <p style="font-size: 11px; color: var(--primary-red); font-weight: 600;" id="biometric-status-text">Tap fingerprint icon to scan</p>
+
+            <button class="btn btn-secondary" style="margin-top: 18px; padding: 8px; font-size: 12px;" onclick="closeBiometricModal()">Cancel</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- ==================== JAVASCRIPT APP LOGIC ==================== -->
+<script>
+    // --- INITIAL DEFAULT DATA ---
+    const DEFAULT_USERS = [
+        { name: "Ali Khan", mobile: "03001234567", pin: "1234", balance: 15000, biometricEnabled: true },
+        { name: "Sara Ahmed", mobile: "03119876543", pin: "4321", balance: 8500, biometricEnabled: false }
+    ];
+
+    const DEFAULT_TRANSACTIONS = [
+        { id: "TXN98213", sender: "03119876543", receiver: "03001234567", amount: 2500, date: "2026-10-17 14:30", type: "RECEIVED" },
+        { id: "TXN88102", sender: "03001234567", receiver: "03119876543", amount: 1000, date: "2026-10-16 09:15", type: "SENT" }
+    ];
+
+    // --- STATE VARIABLES ---
+    let currentUser = null;
+    let isBalanceHidden = true;
+    let biometricCallback = null;
+
+    // --- STORAGE INITIALIZATION ---
+    function initStorage() {
+        if (!localStorage.getItem("mc_users")) {
+            localStorage.setItem("mc_users", JSON.stringify(DEFAULT_USERS));
+        }
+        if (!localStorage.getItem("mc_transactions")) {
+            localStorage.setItem("mc_transactions", JSON.stringify(DEFAULT_TRANSACTIONS));
+        }
+    }
+
+    function getUsers() {
+        return JSON.parse(localStorage.getItem("mc_users")) || [];
+    }
+
+    function saveUsers(users) {
+        localStorage.setItem("mc_users", JSON.stringify(users));
+    }
+
+    function getTransactions() {
+        return JSON.parse(localStorage.getItem("mc_transactions")) || [];
+    }
+
+    function saveTransactions(txs) {
+        localStorage.setItem("mc_transactions", JSON.stringify(txs));
+    }
+
+    // --- SCREEN NAVIGATION ---
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const targetScreen = document.getElementById(screenId);
+        if (targetScreen) targetScreen.classList.add('active');
+
+        // Bottom nav visibility control
+        const bottomNav = document.getElementById('main-bottom-nav');
+        const navScreens = ['screen-home', 'screen-send', 'screen-history', 'screen-profile'];
+        
+        if (navScreens.includes(screenId) && currentUser) {
+            bottomNav.style.display = 'flex';
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            if (screenId === 'screen-home') document.getElementById('nav-home').classList.add('active');
+            if (screenId === 'screen-send') document.getElementById('nav-send').classList.add('active');
+            if (screenId === 'screen-history') document.getElementById('nav-history').classList.add('active');
+            if (screenId === 'screen-profile') document.getElementById('nav-profile').classList.add('active');
+        } else {
+            bottomNav.style.display = 'none';
+        }
+
+        // Screen specific refreshes
+        if (screenId === 'screen-home') refreshDashboard();
+        if (screenId === 'screen-history') renderFullHistory();
+        if (screenId === 'screen-profile') renderProfileScreen();
+        if (screenId === 'screen-receive') renderReceiveScreen();
+    }
+
+    function showAlert(elementId, msg, isSuccess = false) {
+        const alert = document.getElementById(elementId);
+        alert.style.display = 'block';
+        alert.className = `alert-box ${isSuccess ? 'alert-success' : 'alert-danger'}`;
+        alert.innerHTML = msg;
+    }
+
+    function hideAlert(elementId) {
+        const alert = document.getElementById(elementId);
+        if(alert) alert.style.display = 'none';
+    }
+
+    // --- AUTHENTICATION LOGIC ---
+    function handleLogin(e) {
+        e.preventDefault();
+        hideAlert('login-alert');
+        const mobile = document.getElementById('login-mobile').value.trim();
+        const pin = document.getElementById('login-pin').value.trim();
+
+        const users = getUsers();
+        const user = users.find(u => u.mobile === mobile && u.pin === pin);
+
+        if (user) {
+            currentUser = user;
+            showScreen('screen-home');
+            document.getElementById('login-form').reset();
+        } else {
+            showAlert('login-alert', 'Invalid Demo Mobile Number or PIN.');
+        }
+    }
+
+    function triggerBiometricLogin() {
+        hideAlert('login-alert');
+        const mobile = document.getElementById('login-mobile').value.trim();
+        const users = getUsers();
+
+        let targetUser = null;
+
+        if (mobile) {
+            targetUser = users.find(u => u.mobile === mobile);
+            if (!targetUser) {
+                showAlert('login-alert', 'Mobile number not found for biometric login.');
+                return;
+            }
+        } else {
+            // Default to first user with biometric enabled if input empty
+            targetUser = users.find(u => u.biometricEnabled);
+            if (!targetUser) {
+                showAlert('login-alert', 'Please enter your mobile number or enable biometric in settings first.');
+                return;
+            }
+        }
+
+        if (!targetUser.biometricEnabled) {
+            showAlert('login-alert', 'Biometric login is not enabled for this account.');
+            return;
+        }
+
+        openBiometricModal('Authenticating Login...', () => {
+            currentUser = targetUser;
+            showScreen('screen-home');
+        });
+    }
+
+    function handleSignup(e) {
+        e.preventDefault();
+        hideAlert('signup-alert');
+        const name = document.getElementById('signup-name').value.trim();
+        const mobile = document.getElementById('signup-mobile').value.trim();
+        const pin = document.getElementById('signup-pin').value.trim();
+
+        if (mobile.length !== 11) {
+            showAlert('signup-alert', 'Mobile number must be exactly 11 digits.');
+            return;
+        }
+
+        const users = getUsers();
+        if (users.some(u => u.mobile === mobile)) {
+            showAlert('signup-alert', 'Mobile number already registered in demo system.');
+            return;
+        }
+
+        const newUser = { name, mobile, pin, balance: 1000, biometricEnabled: true };
+        users.push(newUser);
+        saveUsers(users);
+
+        currentUser = newUser;
+        alert('Demo Account created with 1,000 PKR Welcome Balance!');
+        showScreen('screen-home');
+        document.getElementById('signup-form').reset();
+    }
+
+    function logout() {
+        currentUser = null;
+        showScreen('screen-login');
+    }
+
+    // --- DASHBOARD FUNCTIONS ---
+    function refreshDashboard() {
+        if (!currentUser) return;
+        
+        // Sync user state from storage
+        const users = getUsers();
+        currentUser = users.find(u => u.mobile === currentUser.mobile) || currentUser;
+
+        document.getElementById('dash-user-name').innerText = currentUser.name;
+        document.getElementById('dash-mobile').innerText = currentUser.mobile;
+        document.getElementById('user-avatar').innerText = currentUser.name.charAt(0).toUpperCase();
+
+        updateBalanceDisplay();
+        renderRecentTransactions();
+    }
+
+    function updateBalanceDisplay() {
+        const balElem = document.getElementById('dash-balance');
+        const eyeIcon = document.getElementById('balance-eye-icon');
+
+        if (isBalanceHidden) {
+            balElem.innerText = "PKR ••••••";
+            eyeIcon.className = "fa-solid fa-eye";
+        } else {
+            balElem.innerText = `PKR ${currentUser.balance.toLocaleString()}`;
+            eyeIcon.className = "fa-solid fa-eye-slash";
+        }
+    }
+
+    function toggleBalanceVisibility() {
+        isBalanceHidden = !isBalanceHidden;
+        updateBalanceDisplay();
+    }
+
+    function renderRecentTransactions() {
+        const txs = getTransactions();
+        const userTxs = txs.filter(t => t.sender === currentUser.mobile || t.receiver === currentUser.mobile).slice(0, 3);
+        const container = document.getElementById('dashboard-recent-txs');
+
+        if (userTxs.length === 0) {
+            container.innerHTML = '<p style="text-align: center; font-size: 12px; color: var(--text-muted); padding: 15px;">No transactions yet.</p>';
+            return;
+        }
+
+        container.innerHTML = userTxs.map(t => createTxHTML(t)).join('');
+    }
+
+    function createTxHTML(tx) {
+        const isCredit = tx.receiver === currentUser.mobile;
+        const iconClass = isCredit ? 'fa-arrow-down tx-icon-credit' : 'fa-arrow-up tx-icon-debit';
+        const amountClass = isCredit ? 'amount-credit' : 'amount-debit';
+        const sign = isCredit ? '+' : '-';
+        const peer = isCredit ? `From: ${tx.sender}` : `To: ${tx.receiver}`;
+
+        return `
+            <div class="tx-item">
+                <div class="tx-icon-wrapper ${isCredit ? 'tx-icon-credit' : 'tx-icon-debit'}">
+                    <i class="fa-solid ${isCredit ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
+                </div>
+                <div class="tx-details">
+                    <div class="tx-title">${isCredit ? 'Received Money' : 'Sent Money'} <span class="simulated-badge">SIMULATED</span></div>
+                    <div class="tx-subtitle">${peer} • ${tx.date}</div>
+                </div>
+                <div class="tx-amount ${amountClass}">
+                    ${sign} PKR ${tx.amount.toLocaleString()}
+                </div>
+            </div>
+        `;
+    }
+
+    // --- TRANSACTIONS LOGIC ---
+    function handleSendMoney(e) {
+        e.preventDefault();
+        hideAlert('send-alert');
+
+        const receiverMobile = document.getElementById('send-receiver').value.trim();
+        const amount = parseFloat(document.getElementById('send-amount').value);
+        const pin = document.getElementById('send-pin').value.trim();
+
+        if (pin !== currentUser.pin) {
+            showAlert('send-alert', 'Invalid Demo PIN entered.');
+            return;
+        }
+
+        executeFundTransfer(receiverMobile, amount);
+    }
+
+    function triggerBiometricSend() {
+        hideAlert('send-alert');
+        const receiverMobile = document.getElementById('send-receiver').value.trim();
+        const amount = parseFloat(document.getElementById('send-amount').value);
+
+        if (!receiverMobile || !amount || amount <= 0) {
+            showAlert('send-alert', 'Please enter receiver mobile number and valid amount first.');
+            return;
+        }
+
+        if (!currentUser.biometricEnabled) {
+            showAlert('send-alert', 'Biometric authorization is disabled in your settings.');
+            return;
+        }
+
+        openBiometricModal(`Authorize PKR ${amount} Transfer`, () => {
+            executeFundTransfer(receiverMobile, amount);
+        });
+    }
+
+    function executeFundTransfer(receiverMobile, amount) {
+        if (receiverMobile === currentUser.mobile) {
+            showAlert('send-alert', 'You cannot send money to your own mobile number.');
+            return;
+        }
+
+        if (amount > currentUser.balance) {
+            showAlert('send-alert', 'Insufficient simulated balance.');
+            return;
+        }
+
+        const users = getUsers();
+        const receiverIndex = users.findIndex(u => u.mobile === receiverMobile);
+
+        if (receiverIndex === -1) {
+            showAlert('send-alert', 'Receiver mobile number is not registered in demo network.');
+            return;
+        }
+
+        const senderIndex = users.findIndex(u => u.mobile === currentUser.mobile);
+
+        // Deduct & Credit
+        users[senderIndex].balance -= amount;
+        users[receiverIndex].balance += amount;
+        saveUsers(users);
+
+        // Update local state
+        currentUser = users[senderIndex];
+
+        // Record Transaction
+        const newTx = {
+            id: 'TXN' + Math.floor(100000 + Math.random() * 900000),
+            sender: currentUser.mobile,
+            receiver: receiverMobile,
+            amount: amount,
+            date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+            type: 'TRANSFER'
+        };
+
+        const txs = getTransactions();
+        txs.unshift(newTx);
+        saveTransactions(txs);
+
+        // Reset Form
+        document.getElementById('send-money-form').reset();
+
+        // Show Receipt Screen
+        document.getElementById('rcpt-id').innerText = newTx.id;
+        document.getElementById('rcpt-date').innerText = newTx.date;
+        document.getElementById('rcpt-receiver').innerText = receiverMobile;
+        document.getElementById('rcpt-amount').innerText = `PKR ${amount.toLocaleString()}`;
+        showScreen('screen-receipt');
+    }
+
+    function handleAddMoney(e) {
+        e.preventDefault();
+        hideAlert('add-alert');
+        const amount = parseFloat(document.getElementById('add-amount').value);
+
+        if (amount <= 0 || isNaN(amount)) {
+            showAlert('add-alert', 'Please enter a valid amount.');
+            return;
+        }
+
+        const users = getUsers();
+        const userIndex = users.findIndex(u => u.mobile === currentUser.mobile);
+
+        users[userIndex].balance += amount;
+        saveUsers(users);
+        currentUser = users[userIndex];
+
+        const newTx = {
+            id: 'ADD' + Math.floor(100000 + Math.random() * 900000),
+            sender: 'SIMULATED_DEPOSIT',
+            receiver: currentUser.mobile,
+            amount: amount,
+            date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+            type: 'ADD'
+        };
+
+        const txs = getTransactions();
+        txs.unshift(newTx);
+        saveTransactions(txs);
+
+        alert(`Successfully simulated deposit of PKR ${amount.toLocaleString()}!`);
+        document.getElementById('add-money-form').reset();
+        showScreen('screen-home');
+    }
+
+    function renderReceiveScreen() {
+        if (!currentUser) return;
+        document.getElementById('receive-user-name').innerText = currentUser.name;
+        document.getElementById('receive-mobile').innerText = currentUser.mobile;
+        
+        // Dynamically generated simulated QR code URL using QuickChart API
+        const qrData = encodeURIComponent(`minicash:${currentUser.mobile}`);
+        document.getElementById('receive-qr-img').src = `https://quickchart.io/qr?text=${qrData}&size=180`;
+    }
+
+    function renderFullHistory() {
+        const txs = getTransactions();
+        const userTxs = txs.filter(t => t.sender === currentUser.mobile || t.receiver === currentUser.mobile);
+        const container = document.getElementById('full-history-list');
+
+        if (userTxs.length === 0) {
+            container.innerHTML = '<div class="card" style="text-align:center; color:var(--text-muted);">No transaction history available.</div>';
+            return;
+        }
+
+        container.innerHTML = userTxs.map(t => createTxHTML(t)).join('');
+    }
+
+    // --- PROFILE & SETTINGS ---
+    function renderProfileScreen() {
+        if (!currentUser) return;
+        document.getElementById('profile-name').innerText = currentUser.name;
+        document.getElementById('profile-mobile').innerText = currentUser.mobile;
+        document.getElementById('profile-avatar').innerText = currentUser.name.charAt(0).toUpperCase();
+        document.getElementById('biometric-toggle').checked = currentUser.biometricEnabled || false;
+    }
+
+    function toggleBiometricSetting(enabled) {
+        const users = getUsers();
+        const idx = users.findIndex(u => u.mobile === currentUser.mobile);
+        users[idx].biometricEnabled = enabled;
+        saveUsers(users);
+        currentUser = users[idx];
+    }
+
+    function toggleChangePinForm() {
+        const box = document.getElementById('change-pin-box');
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function handleChangePin() {
+        hideAlert('pin-change-alert');
+        const currPin = document.getElementById('pin-current').value.trim();
+        const newPin = document.getElementById('pin-new').value.trim();
+
+        if (currPin !== currentUser.pin) {
+            showAlert('pin-change-alert', 'Current PIN is incorrect.');
+            return;
+        }
+
+        if (newPin.length !== 4 || isNaN(newPin)) {
+            showAlert('pin-change-alert', 'New PIN must be exactly 4 digits.');
+            return;
+        }
+
+        const users = getUsers();
+        const idx = users.findIndex(u => u.mobile === currentUser.mobile);
+        users[idx].pin = newPin;
+        saveUsers(users);
+        currentUser = users[idx];
+
+        alert('Demo PIN updated successfully!');
+        toggleChangePinForm();
+    }
+
+    // --- BIOMETRIC SIMULATION MODAL CONTROLLER ---
+    function openBiometricModal(msg, callback) {
+        document.getElementById('biometric-modal-msg').innerText = msg;
+        document.getElementById('biometric-status-text').innerText = "Tap fingerprint icon to scan";
+        document.getElementById('fp-scan-btn').classList.remove('scanning');
+        document.getElementById('biometric-modal').classList.add('active');
+        biometricCallback = callback;
+    }
+
+    function closeBiometricModal() {
+        document.getElementById('biometric-modal').classList.remove('active');
+        biometricCallback = null;
+    }
+
+    function executeBiometricScan() {
+        const btn = document.getElementById('fp-scan-btn');
+        const statusText = document.getElementById('biometric-status-text');
+
+        btn.classList.add('scanning');
+        statusText.innerText = "Scanning fingerprint...";
+
+        setTimeout(() => {
+            statusText.innerText = "Verification Successful!";
+            setTimeout(() => {
+                closeBiometricModal();
+                if (biometricCallback) biometricCallback();
+            }, 400);
+        }, 800);
+    }
+
+    // --- ADMIN PANEL LOGIC ---
+    function handleAdminLogin(e) {
+        e.preventDefault();
+        hideAlert('admin-login-alert');
+        const user = document.getElementById('admin-user').value.trim();
+        const pass = document.getElementById('admin-pass').value.trim();
+
+        if (user === 'admin' && pass === 'admin123') {
+            renderAdminPanel();
+            showScreen('screen-admin-dashboard');
+        } else {
+            showAlert('admin-login-alert', 'Invalid Admin Credentials.');
+        }
+    }
+
+    function renderAdminPanel() {
+        const users = getUsers();
+        const userListContainer = document.getElementById('admin-users-list');
+        const selectContainer = document.getElementById('admin-target-user');
+
+        userListContainer.innerHTML = users.map(u => `
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #EEE; font-size:12px;">
+                <div><strong>${u.name}</strong> (${u.mobile})</div>
+                <div style="color:var(--primary-red); font-weight:700;">PKR ${u.balance.toLocaleString()}</div>
+            </div>
+        `).join('');
+
+        selectContainer.innerHTML = users.map(u => `<option value="${u.mobile}">${u.name} (${u.mobile})</option>`).join('');
+    }
+
+    function handleAdminBalanceUpdate() {
+        hideAlert('admin-adjust-alert');
+        const mobile = document.getElementById('admin-target-user').value;
+        const newBal = parseFloat(document.getElementById('admin-new-balance').value);
+
+        if (isNaN(newBal) || newBal < 0) {
+            showAlert('admin-adjust-alert', 'Please enter a valid balance.');
+            return;
+        }
+
+        const users = getUsers();
+        const idx = users.findIndex(u => u.mobile === mobile);
+        users[idx].balance = newBal;
+        saveUsers(users);
+
+        alert(`Balance updated for ${users[idx].name} to PKR ${newBal}`);
+        document.getElementById('admin-new-balance').value = '';
+        renderAdminPanel();
+    }
+
+    // --- APP BOOTSTRAP ---
+    window.onload = function() {
+        initStorage();
+    };
+</script>
+</body>
+</html>
